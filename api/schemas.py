@@ -60,8 +60,61 @@ class ResolutionCheck(BaseModel):
     )
 
 
+DiagnosticValue = bool | int | float | str
+
+
+class DiagnosticResultResponse(BaseModel):
+    """One transparent defect signal or advisory risk estimate."""
+
+    score: float = Field(
+        ge=0.0,
+        le=1.0,
+        description="Defect severity from 0 (minimal) to 1 (high).",
+    )
+    passes: bool = Field(
+        description="True when the measured severity remains within its threshold."
+    )
+    status: str = Field(description="Short human-readable assessment.")
+    assessment_type: Literal[
+        "deterministic_signal", "advisory_risk_heuristic"
+    ] = Field(
+        description=(
+            "Whether this is a direct image signal or a context-limited risk heuristic."
+        )
+    )
+    explanation: str = Field(
+        description="What was measured and how the result should be interpreted."
+    )
+    measured: dict[str, DiagnosticValue] = Field(
+        description="Measured image statistics used by the diagnostic."
+    )
+    thresholds: dict[str, DiagnosticValue] = Field(
+        description="Thresholds used to convert the measurements into a review decision."
+    )
+
+
+class ImageDiagnosticsResponse(BaseModel):
+    """The eight checks requested by the project brief."""
+
+    blur: DiagnosticResultResponse
+    glare: DiagnosticResultResponse
+    darkness: DiagnosticResultResponse
+    overexposure: DiagnosticResultResponse
+    motion_artifacts: DiagnosticResultResponse
+    occlusion: DiagnosticResultResponse
+    poor_framing: DiagnosticResultResponse
+    low_resolution: DiagnosticResultResponse
+
+
+class DiagnosticSummary(BaseModel):
+    """Compact interpretation of the eight diagnostic results."""
+
+    flagged_count: int = Field(ge=0, le=8)
+    review_recommended: bool
+
+
 class QualityAnalysisResponse(BaseModel):
-    """Overall IQA score and the two checks used for suitability."""
+    """Overall IQA prediction plus eight transparent image diagnostics."""
 
     quality_score: float = Field(
         ge=0.0,
@@ -73,10 +126,12 @@ class QualityAnalysisResponse(BaseModel):
     )
     suitable: bool = Field(
         description=(
-            "True only when the model-quality check and the separate resolution "
-            "check both pass."
+            "True only when the learned quality check and all eight diagnostic "
+            "checks pass."
         )
     )
     model_check: ModelQualityCheck
     resolution_check: ResolutionCheck
+    diagnostics: ImageDiagnosticsResponse
+    diagnostics_summary: DiagnosticSummary
     image: ImageDetails

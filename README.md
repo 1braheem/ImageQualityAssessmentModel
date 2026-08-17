@@ -1,6 +1,6 @@
 # Image Quality Assessment Model
 
-An end-to-end no-reference image quality assessment project that predicts an image's overall perceptual quality and whether it is suitable for downstream computer-vision processing. It uses KonIQ-10k, a pretrained EfficientNet-B0 regressor, and a FastAPI image-upload endpoint.
+An end-to-end no-reference image quality assessment project that predicts an image's overall perceptual quality and whether it is suitable for downstream computer-vision processing. It uses KonIQ-10k, a pretrained EfficientNet-B0 regressor, eight explainable image diagnostics, and a FastAPI image-upload endpoint with a local web interface.
 
 The project is complete through FastAPI. Docker and a separate automated test suite are intentionally outside the current scope.
 
@@ -11,10 +11,58 @@ For one JPEG, PNG, or WebP image, the API returns:
 - `quality_score`: learned EfficientNet-B0 prediction between 0 and 1;
 - `mos_equivalent`: the same prediction on the KonIQ 0-100 MOS scale;
 - `model_check`: whether the learned score meets the documented 0.60 threshold;
-- `resolution_check`: a separate deterministic 224 x 224 minimum-dimension rule; and
-- `suitable`: true only when both checks pass.
+- `resolution_check`: a separate deterministic 224 x 224 minimum-dimension rule;
+- `suitable`: true only when the learned-model check and all eight diagnostics pass;
+- `image`: the decoded file's original width, height, and detected format;
+- `diagnostics`: eight named diagnostic or risk checks; and
+- `diagnostics_summary`: the number of flagged checks and whether review is recommended.
 
 The 0.60 threshold is a transparent project heuristic, not a separately trained suitability classifier. KonIQ-10k does not contain downstream-task suitability labels.
+
+The suitability decision combines two clearly separated sources: `model_check` must pass and every entry in `diagnostics` must pass. The diagnostics therefore affect the final decision, but remain deterministic pixel measurements rather than outputs from the EfficientNet regression head. `resolution_check` exposes the original minimum-dimension rule directly, while `diagnostics.low_resolution` reports that evidence in the common diagnostic format. Because the two advisory risk heuristics participate in this conservative decision, a false risk flag can make `suitable` false; consumers should inspect the individual explanation and measurement rather than treat the Boolean as ground truth.
+
+### Learned score versus deterministic diagnostics
+
+There are two different kinds of analysis in one response:
+
+1. **Learned overall quality:** EfficientNet-B0 produces one `quality_score`, trained against KonIQ-10k MOS. `mos_equivalent` is that same value expressed on a 0-100 scale, not a second prediction.
+2. **Deterministic image signals:** ordinary pixel statistics and dimension rules produce the eight entries in `diagnostics`. Each entry is calculated directly from the uploaded image on every request; none is trained from KonIQ defect labels.
+
+The separate `diagnostics_summary` object contains `flagged_count` and `review_recommended`. `flagged_count` is the number of diagnostics with `passes: false`; `review_recommended` is true when at least one is flagged.
+
+Each entry under `diagnostics` contains:
+
+- `score`: normalized severity from 0 to 1, where higher means more evidence of a problem;
+- `passes`: whether the signal remains within its configured review threshold;
+- `status`: short human-readable result text;
+- `assessment_type`: `deterministic_signal` or `advisory_risk_heuristic`;
+- `explanation`: what the result means and how cautiously to read it;
+- `measured`: the underlying statistic or dimensions used by that check; and
+- `thresholds`: the configured values used to turn the measurement into severity and Pass/Review output.
+
+The UI multiplies `score` by 100 for its severity bar and displays explicit **Pass** or **Review** text. A diagnostic score is not a probability, confidence value, MOS component, or quantity calibrated for comparison with another diagnostic.
+
+### Eight diagnostic signals and their limits
+
+Six entries are presented as **deterministic detections**: a named, reproducible image measurement crosses a stated threshold. “Detected” here means the implemented signal fired; it does not mean a supervised defect classifier confirmed the cause. The first five are flagged at severity 0.50 or above; low resolution uses the exact stated minimum dimensions.
+
+| API key | Output category | What is measured | Scientific limitation |
+| --- | --- | --- | --- |
+| `blur` | Detection | Variance of a four-neighbour luminance Laplacian, with mean gradient reported for context | Smooth backgrounds, shallow depth of field, illustrations, and intentional softness can resemble blur. |
+| `glare` | Detection | Localized low-saturation pixels above 98.5% luminance, measured over an 8 x 8 grid | White objects, lamps, reflections, and legitimate highlights can trigger the same pixel pattern. |
+| `darkness` | Detection | Mean luminance plus the fraction of pixels at or below 15% luminance | Night scenes and low-key photography may be intentionally dark; scene intent is unknown. |
+| `overexposure` | Detection | Mean luminance plus the fraction of pixels above 95% luminance; clipped-channel fraction is also reported | Snow, paper, studio backgrounds, and other naturally white areas can resemble clipping. |
+| `motion_artifacts` | Detection | Horizontal-versus-vertical gradient imbalance plus excess adjacent-pixel correlation along the smoother axis | Repeated textures, camera perspective, and strongly directional content can affect the signal; it does not prove camera or subject motion. |
+| `low_resolution` | Detection | Original pixel width and height against the minimum rule | Dimensions are exact, but pixel count alone cannot establish useful detail, focus, or downstream-task performance. |
+
+The remaining two entries are deliberately named **heuristic risks**, not detections:
+
+| API key | Output category | What the heuristic indicates | Scientific limitation |
+| --- | --- | --- | --- |
+| `occlusion` | Risk indicator | Uniform, low-gradient tiles on a 6 x 6 grid, with extra weight for the center and extreme tones | There are no object boxes, masks, subject labels, or scene understanding; skies, walls, graphics, and shallow depth of field can resemble obstruction. |
+| `poor_framing` | Risk indicator | Excess gradient detail in the outer 6% border and displacement of the gradient-energy centroid | There is no subject detector or aesthetic ground truth, so deliberate off-center composition or edge detail can trigger review. |
+
+Diagnostic analysis applies EXIF orientation, converts the image to RGB, and limits the longest analysis side to 1,024 pixels for predictable computation; the low-resolution rule still uses the original oriented dimensions. All eight thresholds are practical project heuristics. Their defect-level precision and recall have not been measured on a labeled diagnostic benchmark. They are useful for transparent screening and debugging, not as medical, safety-critical, forensic, or photographic ground truth.
 
 ## Dataset decision: KonIQ-10k
 
@@ -39,7 +87,9 @@ The local image directory has 300 additional JPEGs without annotation rows. The 
 
 KonIQ-10k directly supports **overall quality regression** through MOS. The photographs can contain real combinations of blur, exposure, noise, compression, and other capture problems, so the overall score is relevant to the project objective.
 
-The annotation fields `c1` to `c5` are distributions of human quality ratings. They are not defect classes. The project therefore does not invent separate predictions for blur, glare, darkness, overexposure, motion artifacts, occlusion, poor framing, or low resolution. Pixel dimensions are checked by a separate rule because all images in this dataset copy have already been standardized to 512 x 384.
+The annotation fields `c1` to `c5` are distributions of human quality ratings. They are not defect classes. EfficientNet-B0 is therefore trained to predict one overall MOS value only; it is **not** trained to classify blur, glare, darkness, overexposure, motion, low resolution, occlusion, or poor framing.
+
+The named diagnostics returned alongside MOS are separate, deterministic measurements of the uploaded pixels. They do not come from KonIQ defect labels and must not be interpreted as eight additional neural-network predictions. This distinction also means the measured test MAE and RMSE below evaluate only overall MOS regression, not diagnostic accuracy.
 
 ## Preprocessing
 
@@ -89,12 +139,14 @@ MAE and RMSE are reported in MOS points; losses are calculated on normalized `MO
 
 ## Test evaluation
 
-The selected epoch-5 checkpoint was evaluated once on all 2,015 unseen official test images:
+The selected epoch-5 checkpoint was evaluated once on all 2,015 unseen official test images for its sole learned target, overall MOS:
 
 | Metric | Result |
 | --- | ---: |
 | MAE | 7.455 MOS points |
 | RMSE | 9.674 MOS points |
+
+These are measured regression errors for the one-dimensional MOS prediction. They are not blur/glare/exposure detection accuracy and do not imply that EfficientNet-B0 received defect-classification training.
 
 Example predictions:
 
@@ -136,7 +188,8 @@ ImageQualityAssessmentModel/
 |   |-- train.py         # Head training and fine-tuning
 |   |-- evaluate.py      # Test metrics and error examples
 |   |-- metrics.py       # Streaming MAE and RMSE
-|   `-- inference.py     # Single-image prediction and suitability logic
+|   |-- inference.py     # Single-image prediction and model-quality logic
+|   `-- diagnostics.py   # Eight deterministic signals and advisory risks
 |-- .gitignore
 |-- README.md
 `-- requirements.txt
@@ -228,7 +281,10 @@ Open:
 1. Open `http://127.0.0.1:8000/` while the server terminal remains running.
 2. Drag an image onto the upload area, or click it and choose a JPEG, PNG, or WebP file.
 3. Confirm the preview, then click **Analyze image quality**.
-4. Read the 0-100 quality score, suitability decision, learned-model check, and separate resolution rule.
+4. Read the 0-100 learned quality score, suitability decision, learned-model check, and separate resolution rule.
+5. Review the eight diagnostic cards. Each shows severity from 0 to 100 (higher is worse), explicit **Pass** or **Review** text, a status and explanation, and the measured pixel statistic or dimensions.
+
+Treat **Occlusion risk** and **Poor framing risk** as advisory prompts, not detected facts. The other six cards report deterministic threshold detections, but can still produce false positives or false negatives for the reasons documented above.
 
 The page validates the basic file type and 10 MiB limit before sending the image to the local API. Server-side validation remains authoritative for corrupt, mismatched, or oversized images.
 
@@ -245,7 +301,7 @@ curl -X POST http://127.0.0.1:8000/analyze-quality \
   -F "file=@/absolute/path/to/image.jpg;type=image/jpeg"
 ```
 
-Example response from a real test image:
+The response keeps the learned result and diagnostic measurements in separate fields. An abbreviated shape is:
 
 ```json
 {
@@ -265,17 +321,51 @@ Example response from a real test image:
     "width": 512,
     "height": 384,
     "format": "JPEG"
+  },
+  "diagnostics": {
+    "blur": {
+      "score": 0.12,
+      "passes": true,
+      "status": "Pass: sufficient high-frequency detail detected",
+      "assessment_type": "deterministic_signal",
+      "explanation": "Low Laplacian variance indicates weak fine detail, although intentionally smooth scenes can also score poorly.",
+      "measured": {
+        "laplacian_variance": 0.002218,
+        "mean_gradient": 0.028
+      },
+      "thresholds": {
+        "review_score": 0.5,
+        "bad_laplacian_variance": 0.00015,
+        "good_laplacian_variance": 0.0025
+      }
+    },
+    "glare": {},
+    "darkness": {},
+    "overexposure": {},
+    "motion_artifacts": {},
+    "occlusion": {},
+    "poor_framing": {},
+    "low_resolution": {}
+  },
+  "diagnostics_summary": {
+    "flagged_count": 0,
+    "review_recommended": false
   }
 }
 ```
+
+The seven empty objects above abbreviate the repeated check shape shown for `blur`; actual API responses populate every field for every check. Use `/docs` for the live, complete schema.
 
 The endpoint accepts JPEG, PNG, and WebP files up to 10 MiB. It returns clear 400, 413, 415, or 503 responses for empty/corrupt images, excessive sizes, unsupported types, or a missing checkpoint.
 
 ## Current limitations
 
-- The model predicts overall subjective quality, not named defects.
+- EfficientNet-B0 predicts overall subjective quality, not named defects; its measured test MAE is 7.455 and RMSE is 9.674 MOS points.
 - The suitability threshold is heuristic because the dataset has no downstream-CV suitability label.
-- The resolution check is independent of the neural network.
+- All eight diagnostics are independent of the neural-network output, and their thresholds have not been validated as defect classifiers on a labeled diagnostic benchmark.
+- Diagnostic severity values are screening signals, not probabilities or mutually comparable scores.
+- Occlusion and poor-framing outputs are advisory risks because the pipeline has no subject localization, segmentation, scene intent, or aesthetic labels.
+- The resolution check is exact for pixel dimensions but does not prove that an image contains useful visual detail.
 - All training images in this copy are 512 x 384, so resolution diversity is not learned.
 - A five-epoch transfer-learning run is a practical baseline, not an exhaustive hyperparameter study.
 - Model weights are not stored in Git; a fresh clone must train a checkpoint or receive one through an appropriate artifact store.

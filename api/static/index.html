@@ -36,8 +36,8 @@
         <h1 id="pageTitle">Is your image ready for computer vision?</h1>
         <p class="intro-copy">
           Upload a JPEG, PNG, or WebP image. The model estimates overall visual
-          quality, then keeps its learned score separate from a transparent
-          resolution check.
+          quality, then keeps its learned score separate from eight transparent
+          image diagnostics and risk checks.
         </p>
       </section>
 
@@ -107,7 +107,7 @@
               <span class="empty-center"></span>
             </div>
             <h3>Your result will appear here</h3>
-            <p>Select an image and run the analysis to see its score and suitability checks.</p>
+            <p>Select an image and run the analysis to see its score, suitability, and diagnostics.</p>
           </div>
 
           <div class="results-content" id="resultsContent" hidden aria-live="polite">
@@ -162,9 +162,182 @@
               </div>
             </div>
 
+            <section class="diagnostics-section" aria-labelledby="diagnosticsTitle">
+              <div class="diagnostics-heading">
+                <div>
+                  <span class="diagnostics-kicker">Transparent image checks</span>
+                  <h3 id="diagnosticsTitle">Diagnostic signals</h3>
+                </div>
+                <p>Defect severity: <strong>0</strong> minimal &middot; <strong>100</strong> high</p>
+              </div>
+
+              <div class="diagnostics-grid" id="diagnosticsGrid">
+                <article class="diagnostic-card" data-diagnostic-key="blur">
+                  <header class="diagnostic-card-heading">
+                    <div>
+                      <span class="diagnostic-number" aria-hidden="true">01</span>
+                      <h4>Blur</h4>
+                    </div>
+                    <span class="diagnostic-verdict" data-field="verdict"></span>
+                  </header>
+                  <div class="diagnostic-score-row">
+                    <strong data-field="score">0%</strong>
+                    <span>severity</span>
+                  </div>
+                  <div class="severity-track" data-field="track" role="meter" aria-label="Blur severity" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                    <span data-field="meter"></span>
+                  </div>
+                  <strong class="diagnostic-status" data-field="status"></strong>
+                  <p class="diagnostic-explanation" data-field="explanation"></p>
+                  <p class="diagnostic-measured"><span>Measured</span><strong data-field="measured"></strong></p>
+                </article>
+
+                <article class="diagnostic-card" data-diagnostic-key="glare">
+                  <header class="diagnostic-card-heading">
+                    <div>
+                      <span class="diagnostic-number" aria-hidden="true">02</span>
+                      <h4>Glare</h4>
+                    </div>
+                    <span class="diagnostic-verdict" data-field="verdict"></span>
+                  </header>
+                  <div class="diagnostic-score-row">
+                    <strong data-field="score">0%</strong>
+                    <span>severity</span>
+                  </div>
+                  <div class="severity-track" data-field="track" role="meter" aria-label="Glare severity" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                    <span data-field="meter"></span>
+                  </div>
+                  <strong class="diagnostic-status" data-field="status"></strong>
+                  <p class="diagnostic-explanation" data-field="explanation"></p>
+                  <p class="diagnostic-measured"><span>Measured</span><strong data-field="measured"></strong></p>
+                </article>
+
+                <article class="diagnostic-card" data-diagnostic-key="darkness">
+                  <header class="diagnostic-card-heading">
+                    <div>
+                      <span class="diagnostic-number" aria-hidden="true">03</span>
+                      <h4>Darkness</h4>
+                    </div>
+                    <span class="diagnostic-verdict" data-field="verdict"></span>
+                  </header>
+                  <div class="diagnostic-score-row">
+                    <strong data-field="score">0%</strong>
+                    <span>severity</span>
+                  </div>
+                  <div class="severity-track" data-field="track" role="meter" aria-label="Darkness severity" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                    <span data-field="meter"></span>
+                  </div>
+                  <strong class="diagnostic-status" data-field="status"></strong>
+                  <p class="diagnostic-explanation" data-field="explanation"></p>
+                  <p class="diagnostic-measured"><span>Measured</span><strong data-field="measured"></strong></p>
+                </article>
+
+                <article class="diagnostic-card" data-diagnostic-key="overexposure">
+                  <header class="diagnostic-card-heading">
+                    <div>
+                      <span class="diagnostic-number" aria-hidden="true">04</span>
+                      <h4>Overexposure</h4>
+                    </div>
+                    <span class="diagnostic-verdict" data-field="verdict"></span>
+                  </header>
+                  <div class="diagnostic-score-row">
+                    <strong data-field="score">0%</strong>
+                    <span>severity</span>
+                  </div>
+                  <div class="severity-track" data-field="track" role="meter" aria-label="Overexposure severity" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                    <span data-field="meter"></span>
+                  </div>
+                  <strong class="diagnostic-status" data-field="status"></strong>
+                  <p class="diagnostic-explanation" data-field="explanation"></p>
+                  <p class="diagnostic-measured"><span>Measured</span><strong data-field="measured"></strong></p>
+                </article>
+
+                <article class="diagnostic-card" data-diagnostic-key="motion_artifacts">
+                  <header class="diagnostic-card-heading">
+                    <div>
+                      <span class="diagnostic-number" aria-hidden="true">05</span>
+                      <h4>Motion artifacts</h4>
+                    </div>
+                    <span class="diagnostic-verdict" data-field="verdict"></span>
+                  </header>
+                  <div class="diagnostic-score-row">
+                    <strong data-field="score">0%</strong>
+                    <span>severity</span>
+                  </div>
+                  <div class="severity-track" data-field="track" role="meter" aria-label="Motion artifacts severity" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                    <span data-field="meter"></span>
+                  </div>
+                  <strong class="diagnostic-status" data-field="status"></strong>
+                  <p class="diagnostic-explanation" data-field="explanation"></p>
+                  <p class="diagnostic-measured"><span>Measured</span><strong data-field="measured"></strong></p>
+                </article>
+
+                <article class="diagnostic-card" data-diagnostic-key="occlusion">
+                  <header class="diagnostic-card-heading">
+                    <div>
+                      <span class="diagnostic-number" aria-hidden="true">06</span>
+                      <h4>Occlusion risk</h4>
+                    </div>
+                    <span class="diagnostic-verdict" data-field="verdict"></span>
+                  </header>
+                  <div class="diagnostic-score-row">
+                    <strong data-field="score">0%</strong>
+                    <span>severity</span>
+                  </div>
+                  <div class="severity-track" data-field="track" role="meter" aria-label="Occlusion risk severity" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                    <span data-field="meter"></span>
+                  </div>
+                  <strong class="diagnostic-status" data-field="status"></strong>
+                  <p class="diagnostic-explanation" data-field="explanation"></p>
+                  <p class="diagnostic-measured"><span>Measured</span><strong data-field="measured"></strong></p>
+                </article>
+
+                <article class="diagnostic-card" data-diagnostic-key="poor_framing">
+                  <header class="diagnostic-card-heading">
+                    <div>
+                      <span class="diagnostic-number" aria-hidden="true">07</span>
+                      <h4>Poor framing risk</h4>
+                    </div>
+                    <span class="diagnostic-verdict" data-field="verdict"></span>
+                  </header>
+                  <div class="diagnostic-score-row">
+                    <strong data-field="score">0%</strong>
+                    <span>severity</span>
+                  </div>
+                  <div class="severity-track" data-field="track" role="meter" aria-label="Poor framing risk severity" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                    <span data-field="meter"></span>
+                  </div>
+                  <strong class="diagnostic-status" data-field="status"></strong>
+                  <p class="diagnostic-explanation" data-field="explanation"></p>
+                  <p class="diagnostic-measured"><span>Measured</span><strong data-field="measured"></strong></p>
+                </article>
+
+                <article class="diagnostic-card" data-diagnostic-key="low_resolution">
+                  <header class="diagnostic-card-heading">
+                    <div>
+                      <span class="diagnostic-number" aria-hidden="true">08</span>
+                      <h4>Low resolution</h4>
+                    </div>
+                    <span class="diagnostic-verdict" data-field="verdict"></span>
+                  </header>
+                  <div class="diagnostic-score-row">
+                    <strong data-field="score">0%</strong>
+                    <span>severity</span>
+                  </div>
+                  <div class="severity-track" data-field="track" role="meter" aria-label="Low resolution severity" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                    <span data-field="meter"></span>
+                  </div>
+                  <strong class="diagnostic-status" data-field="status"></strong>
+                  <p class="diagnostic-explanation" data-field="explanation"></p>
+                  <p class="diagnostic-measured"><span>Measured</span><strong data-field="measured"></strong></p>
+                </article>
+              </div>
+            </section>
+
             <p class="model-note">
-              This model predicts overall perceptual quality. It does not invent individual
-              blur, glare, exposure, or occlusion labels that are absent from the dataset.
+              The overall score is the learned EfficientNet-B0 prediction. The eight signals
+              are transparent diagnostics and risk indicators, not separately trained defect
+              labels from KonIQ-10k.
             </p>
           </div>
         </article>

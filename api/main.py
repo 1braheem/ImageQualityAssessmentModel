@@ -13,13 +13,16 @@ from fastapi.staticfiles import StaticFiles
 from PIL import Image, UnidentifiedImageError
 
 from api.schemas import (
+    DiagnosticSummary,
     HealthResponse,
     ImageDetails,
+    ImageDiagnosticsResponse,
     ModelQualityCheck,
     QualityAnalysisResponse,
     ResolutionCheck,
     ServiceResponse,
 )
+from src.iqa.diagnostics import analyze_diagnostics
 from src.iqa.inference import IQAPredictor, resolve_model_path
 
 
@@ -36,10 +39,11 @@ STATIC_DIRECTORY = Path(__file__).resolve().parent / "static"
 
 app = FastAPI(
     title="Image Quality Assessment API",
-    version="1.0.0",
+    version="1.1.0",
     description=(
-        "Predicts an overall perceptual-quality score for one image. The model "
-        "does not produce individual blur, glare, exposure, or occlusion labels."
+        "Predicts overall perceptual quality and reports eight transparent image "
+        "diagnostics. The diagnostics are signals and risk heuristics rather than "
+        "separately trained KonIQ-10k defect labels."
     ),
 )
 app.mount("/static", StaticFiles(directory=STATIC_DIRECTORY), name="static")
@@ -135,13 +139,14 @@ def health() -> HealthResponse:
         400: {"description": "Empty or corrupted image"},
         413: {"description": "Upload or decoded image is too large"},
         415: {"description": "Unsupported or mismatched image type"},
+        500: {"description": "Quality inference or diagnostic analysis failed"},
         503: {"description": "Model checkpoint is unavailable or invalid"},
     },
 )
 async def analyze_quality(
     file: UploadFile = File(..., description="JPEG, PNG, or WebP image (maximum 10 MiB)."),
 ) -> QualityAnalysisResponse:
-    """Run overall quality inference for one validated image upload."""
+    """Run learned quality inference and eight diagnostics for one validated upload."""
 
     content_type = (file.content_type or "").lower().split(";", maxsplit=1)[0].strip()
     if content_type not in SUPPORTED_CONTENT_TYPES:
@@ -193,10 +198,34 @@ async def analyze_quality(
             detail=f"Image quality inference failed: {exc}",
         ) from exc
 
+    try:
+        diagnostics = analyze_diagnostics(
+            image,
+            minimum_width=prediction.minimum_width,
+            minimum_height=prediction.minimum_height,
+        )
+    except (OSError, RuntimeError, TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Image diagnostics failed: {exc}",
+        ) from exc
+
+    diagnostics_payload = diagnostics.to_dict()
+    checks_payload = diagnostics_payload["checks"]
+    suitable = prediction.passes_quality_threshold and not diagnostics.review_recommended
+
+    try:
+        diagnostics_response = ImageDiagnosticsResponse(**checks_payload)
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Image diagnostics returned an invalid result: {exc}",
+        ) from exc
+
     return QualityAnalysisResponse(
         quality_score=prediction.quality_score,
         mos_equivalent=prediction.mos_equivalent,
-        suitable=prediction.suitable,
+        suitable=suitable,
         model_check=ModelQualityCheck(
             threshold=prediction.quality_threshold,
             passes=prediction.passes_quality_threshold,
@@ -205,6 +234,11 @@ async def analyze_quality(
             minimum_width=prediction.minimum_width,
             minimum_height=prediction.minimum_height,
             passes=prediction.passes_resolution_check,
+        ),
+        diagnostics=diagnostics_response,
+        diagnostics_summary=DiagnosticSummary(
+            flagged_count=diagnostics.flagged_count,
+            review_recommended=diagnostics.review_recommended,
         ),
         image=ImageDetails(
             width=prediction.image_width,

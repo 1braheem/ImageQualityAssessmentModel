@@ -2,6 +2,16 @@
 
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 const SUPPORTED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const DIAGNOSTIC_KEYS = [
+  "blur",
+  "glare",
+  "darkness",
+  "overexposure",
+  "motion_artifacts",
+  "occlusion",
+  "poor_framing",
+  "low_resolution",
+];
 
 const fileInput = document.querySelector("#fileInput");
 const dropZone = document.querySelector("#dropZone");
@@ -18,6 +28,13 @@ const modelStatusText = modelStatus.querySelector(".status-text");
 const resultsEmpty = document.querySelector("#resultsEmpty");
 const resultsContent = document.querySelector("#resultsContent");
 const resultState = document.querySelector("#resultState");
+const diagnosticsGrid = document.querySelector("#diagnosticsGrid");
+const diagnosticCards = new Map(
+  [...diagnosticsGrid.querySelectorAll("[data-diagnostic-key]")].map((card) => [
+    card.dataset.diagnosticKey,
+    card,
+  ]),
+);
 
 let currentFile = null;
 let previewUrl = null;
@@ -117,7 +134,85 @@ function setCheck(iconElement, passed) {
   iconElement.classList.toggle("fail", !passed);
 }
 
+function formatMeasured(value) {
+  if (value === null || value === undefined || value === "") {
+    return "Not available";
+  }
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? String(Number(value.toFixed(4))) : "Not available";
+  }
+  if (typeof value === "boolean") {
+    return value ? "Yes" : "No";
+  }
+  if (Array.isArray(value)) {
+    return value.map(formatMeasured).join(", ");
+  }
+  if (typeof value === "object") {
+    return Object.entries(value)
+      .map(([key, item]) => {
+        const label = key.replaceAll("_", " ").replace(/^./, (letter) => letter.toUpperCase());
+        return `${label}: ${formatMeasured(item)}`;
+      })
+      .join(" · ");
+  }
+  return String(value);
+}
+
+function parseDiagnostics(diagnostics) {
+  if (!diagnostics || typeof diagnostics !== "object") {
+    throw new Error("The API response did not include image diagnostics.");
+  }
+
+  return DIAGNOSTIC_KEYS.map((key) => {
+    const diagnostic = diagnostics[key];
+    if (!diagnostic || typeof diagnostic !== "object") {
+      throw new Error(`The API response is missing the ${key.replaceAll("_", " ")} diagnostic.`);
+    }
+
+    const score = Number(diagnostic.score);
+    if (!Number.isFinite(score)) {
+      throw new Error(`The ${key.replaceAll("_", " ")} diagnostic has an invalid score.`);
+    }
+
+    return {
+      key,
+      score: Math.max(0, Math.min(1, score)),
+      passes: diagnostic.passes === true,
+      status: String(diagnostic.status || (diagnostic.passes ? "Within range" : "Needs review")),
+      explanation: String(diagnostic.explanation || "No explanation was provided."),
+      measured: formatMeasured(diagnostic.measured),
+    };
+  });
+}
+
+function renderDiagnostics(diagnostics) {
+  for (const diagnostic of diagnostics) {
+    const card = diagnosticCards.get(diagnostic.key);
+    if (!card) continue;
+
+    const severityPercent = diagnostic.score * 100;
+    const displayedPercent = severityPercent.toFixed(1);
+    const verdict = diagnostic.passes ? "Pass" : "Review";
+
+    card.classList.toggle("attention", !diagnostic.passes);
+    card.querySelector('[data-field="verdict"]').textContent = verdict;
+    card.querySelector('[data-field="score"]').textContent = `${displayedPercent}%`;
+    card.querySelector('[data-field="status"]').textContent = diagnostic.status;
+    card.querySelector('[data-field="explanation"]').textContent = diagnostic.explanation;
+    card.querySelector('[data-field="measured"]').textContent = diagnostic.measured;
+
+    const track = card.querySelector('[data-field="track"]');
+    track.style.setProperty("--severity-size", `${severityPercent}%`);
+    track.setAttribute("aria-valuenow", displayedPercent);
+    track.setAttribute(
+      "aria-valuetext",
+      `${displayedPercent}% defect severity, ${diagnostic.passes ? "check passed" : "review recommended"}`,
+    );
+  }
+}
+
 function renderResult(data) {
+  const diagnostics = parseDiagnostics(data.diagnostics);
   const score = Math.max(0, Math.min(1, Number(data.quality_score)));
   const scorePercent = Math.round(score * 100);
   const [band, description] = qualityBand(score);
@@ -148,6 +243,7 @@ function renderResult(data) {
   document.querySelector("#imageDimensions").textContent = `${data.image.width} x ${data.image.height} px`;
   document.querySelector("#imageFormat").textContent = data.image.format || "Unknown";
   document.querySelector("#mosValue").textContent = Number(data.mos_equivalent).toFixed(2);
+  renderDiagnostics(diagnostics);
 
   resultsEmpty.hidden = true;
   resultsContent.hidden = false;
