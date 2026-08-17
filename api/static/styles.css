@@ -839,6 +839,17 @@ a {
   color: var(--muted-strong);
 }
 
+.diagnostics-zero-note {
+  margin: -2px 0 14px;
+  border-left: 2px solid rgba(155, 225, 93, 0.58);
+  border-radius: 0 9px 9px 0;
+  padding: 8px 10px;
+  color: var(--muted-strong);
+  background: rgba(155, 225, 93, 0.045);
+  font-size: 0.66rem;
+  line-height: 1.5;
+}
+
 .diagnostics-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -936,6 +947,7 @@ a {
   font-weight: 660;
   letter-spacing: -0.05em;
   line-height: 1;
+  white-space: nowrap;
 }
 
 .diagnostic-score-row span {
@@ -944,6 +956,20 @@ a {
   font-weight: 720;
   letter-spacing: 0.05em;
   text-transform: uppercase;
+}
+
+.diagnostic-score-row .calculated-indicator {
+  margin-left: auto;
+  border: 1px solid rgba(190, 222, 211, 0.17);
+  border-radius: 999px;
+  padding: 4px 6px;
+  color: var(--muted-strong);
+  background: rgba(255, 255, 255, 0.025);
+  font-size: 0.49rem;
+  font-weight: 820;
+  letter-spacing: 0.07em;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .severity-track {
@@ -1002,6 +1028,20 @@ a {
   font-weight: 650;
   line-height: 1.35;
   text-align: right;
+}
+
+.diagnostic-limits {
+  margin-top: 0;
+  border-top-style: dashed;
+}
+
+.diagnostic-limits span {
+  color: #84978f;
+}
+
+.diagnostic-limits strong {
+  color: #aebdb8;
+  font-size: 0.57rem;
 }
 
 .model-note {

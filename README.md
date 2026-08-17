@@ -40,7 +40,9 @@ Each entry under `diagnostics` contains:
 - `measured`: the underlying statistic or dimensions used by that check; and
 - `thresholds`: the configured values used to turn the measurement into severity and Pass/Review output.
 
-The UI multiplies `score` by 100 for its severity bar and displays explicit **Pass** or **Review** text. A diagnostic score is not a probability, confidence value, MOS component, or quantity calibrated for comparison with another diagnostic.
+The UI multiplies `score` by 100 to present a 0-100 severity index and bar, then displays explicit **Pass** or **Review** text. It does not present the value as a percentage. A diagnostic score is not a probability, confidence value, MOS component, or quantity calibrated for comparison with another diagnostic.
+
+A severity of exactly `0` is a valid computed result, not a missing or uninitialized value. Scores are threshold-normalized screening severities: measurements on the safe side of a configured “good” boundary intentionally clamp to zero. The accompanying `measured` values and `thresholds` show the raw evidence and mapping used. For `low_resolution`, zero specifically means both original dimensions meet or exceed their minimums; it does not mean the dimensions are zero or that overall image quality is perfect.
 
 ### Eight diagnostic signals and their limits
 

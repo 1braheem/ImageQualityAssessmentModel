@@ -139,7 +139,9 @@ function formatMeasured(value) {
     return "Not available";
   }
   if (typeof value === "number") {
-    return Number.isFinite(value) ? String(Number(value.toFixed(4))) : "Not available";
+    return Number.isFinite(value)
+      ? value.toLocaleString(undefined, { maximumSignificantDigits: 6, useGrouping: false })
+      : "Not available";
   }
   if (typeof value === "boolean") {
     return value ? "Yes" : "No";
@@ -174,6 +176,16 @@ function parseDiagnostics(diagnostics) {
       throw new Error(`The ${key.replaceAll("_", " ")} diagnostic has an invalid score.`);
     }
 
+    const thresholds = diagnostic.thresholds;
+    if (
+      !thresholds
+      || typeof thresholds !== "object"
+      || Array.isArray(thresholds)
+      || Object.keys(thresholds).length === 0
+    ) {
+      throw new Error(`The ${key.replaceAll("_", " ")} diagnostic has no decision limits.`);
+    }
+
     return {
       key,
       score: Math.max(0, Math.min(1, score)),
@@ -181,6 +193,7 @@ function parseDiagnostics(diagnostics) {
       status: String(diagnostic.status || (diagnostic.passes ? "Within range" : "Needs review")),
       explanation: String(diagnostic.explanation || "No explanation was provided."),
       measured: formatMeasured(diagnostic.measured),
+      thresholds: formatMeasured(thresholds),
     };
   });
 }
@@ -190,23 +203,25 @@ function renderDiagnostics(diagnostics) {
     const card = diagnosticCards.get(diagnostic.key);
     if (!card) continue;
 
-    const severityPercent = diagnostic.score * 100;
-    const displayedPercent = severityPercent.toFixed(1);
-    const verdict = diagnostic.passes ? "Pass" : "Review";
+    const severityIndex = diagnostic.score * 100;
+    const displayedIndex = severityIndex.toFixed(1);
+    const withinBaseline = diagnostic.score === 0;
+    const verdict = withinBaseline ? "Within baseline" : diagnostic.passes ? "Pass" : "Review";
 
     card.classList.toggle("attention", !diagnostic.passes);
     card.querySelector('[data-field="verdict"]').textContent = verdict;
-    card.querySelector('[data-field="score"]').textContent = `${displayedPercent}%`;
+    card.querySelector('[data-field="score"]').textContent = `${displayedIndex} / 100`;
     card.querySelector('[data-field="status"]').textContent = diagnostic.status;
     card.querySelector('[data-field="explanation"]').textContent = diagnostic.explanation;
     card.querySelector('[data-field="measured"]').textContent = diagnostic.measured;
+    card.querySelector('[data-field="thresholds"]').textContent = diagnostic.thresholds;
 
     const track = card.querySelector('[data-field="track"]');
-    track.style.setProperty("--severity-size", `${severityPercent}%`);
-    track.setAttribute("aria-valuenow", displayedPercent);
+    track.style.setProperty("--severity-size", `${severityIndex}%`);
+    track.setAttribute("aria-valuenow", displayedIndex);
     track.setAttribute(
       "aria-valuetext",
-      `${displayedPercent}% defect severity, ${diagnostic.passes ? "check passed" : "review recommended"}`,
+      `Severity index ${displayedIndex} out of 100, ${withinBaseline ? "within baseline" : diagnostic.passes ? "check passed" : "review recommended"}`,
     );
   }
 }

@@ -168,8 +168,12 @@
                   <span class="diagnostics-kicker">Transparent image checks</span>
                   <h3 id="diagnosticsTitle">Diagnostic signals</h3>
                 </div>
-                <p>Defect severity: <strong>0</strong> minimal &middot; <strong>100</strong> high</p>
+                <p>Severity index: <strong>0</strong> minimal &middot; <strong>100</strong> high</p>
               </div>
+              <p class="diagnostics-zero-note">
+                0.0 is a calculated minimum: the measured signal is inside the safe range,
+                not missing.
+              </p>
 
               <div class="diagnostics-grid" id="diagnosticsGrid">
                 <article class="diagnostic-card" data-diagnostic-key="blur">
@@ -181,8 +185,9 @@
                     <span class="diagnostic-verdict" data-field="verdict"></span>
                   </header>
                   <div class="diagnostic-score-row">
-                    <strong data-field="score">0%</strong>
-                    <span>severity</span>
+                    <strong data-field="score">0.0 / 100</strong>
+                    <span>severity index</span>
+                    <span class="calculated-indicator">Calculated</span>
                   </div>
                   <div class="severity-track" data-field="track" role="meter" aria-label="Blur severity" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
                     <span data-field="meter"></span>
@@ -190,6 +195,7 @@
                   <strong class="diagnostic-status" data-field="status"></strong>
                   <p class="diagnostic-explanation" data-field="explanation"></p>
                   <p class="diagnostic-measured"><span>Measured</span><strong data-field="measured"></strong></p>
+                  <p class="diagnostic-measured diagnostic-limits"><span>Decision limits</span><strong data-field="thresholds"></strong></p>
                 </article>
 
                 <article class="diagnostic-card" data-diagnostic-key="glare">
@@ -201,8 +207,9 @@
                     <span class="diagnostic-verdict" data-field="verdict"></span>
                   </header>
                   <div class="diagnostic-score-row">
-                    <strong data-field="score">0%</strong>
-                    <span>severity</span>
+                    <strong data-field="score">0.0 / 100</strong>
+                    <span>severity index</span>
+                    <span class="calculated-indicator">Calculated</span>
                   </div>
                   <div class="severity-track" data-field="track" role="meter" aria-label="Glare severity" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
                     <span data-field="meter"></span>
@@ -210,6 +217,7 @@
                   <strong class="diagnostic-status" data-field="status"></strong>
                   <p class="diagnostic-explanation" data-field="explanation"></p>
                   <p class="diagnostic-measured"><span>Measured</span><strong data-field="measured"></strong></p>
+                  <p class="diagnostic-measured diagnostic-limits"><span>Decision limits</span><strong data-field="thresholds"></strong></p>
                 </article>
 
                 <article class="diagnostic-card" data-diagnostic-key="darkness">
@@ -221,8 +229,9 @@
                     <span class="diagnostic-verdict" data-field="verdict"></span>
                   </header>
                   <div class="diagnostic-score-row">
-                    <strong data-field="score">0%</strong>
-                    <span>severity</span>
+                    <strong data-field="score">0.0 / 100</strong>
+                    <span>severity index</span>
+                    <span class="calculated-indicator">Calculated</span>
                   </div>
                   <div class="severity-track" data-field="track" role="meter" aria-label="Darkness severity" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
                     <span data-field="meter"></span>
@@ -230,6 +239,7 @@
                   <strong class="diagnostic-status" data-field="status"></strong>
                   <p class="diagnostic-explanation" data-field="explanation"></p>
                   <p class="diagnostic-measured"><span>Measured</span><strong data-field="measured"></strong></p>
+                  <p class="diagnostic-measured diagnostic-limits"><span>Decision limits</span><strong data-field="thresholds"></strong></p>
                 </article>
 
                 <article class="diagnostic-card" data-diagnostic-key="overexposure">
@@ -241,8 +251,9 @@
                     <span class="diagnostic-verdict" data-field="verdict"></span>
                   </header>
                   <div class="diagnostic-score-row">
-                    <strong data-field="score">0%</strong>
-                    <span>severity</span>
+                    <strong data-field="score">0.0 / 100</strong>
+                    <span>severity index</span>
+                    <span class="calculated-indicator">Calculated</span>
                   </div>
                   <div class="severity-track" data-field="track" role="meter" aria-label="Overexposure severity" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
                     <span data-field="meter"></span>
@@ -250,6 +261,7 @@
                   <strong class="diagnostic-status" data-field="status"></strong>
                   <p class="diagnostic-explanation" data-field="explanation"></p>
                   <p class="diagnostic-measured"><span>Measured</span><strong data-field="measured"></strong></p>
+                  <p class="diagnostic-measured diagnostic-limits"><span>Decision limits</span><strong data-field="thresholds"></strong></p>
                 </article>
 
                 <article class="diagnostic-card" data-diagnostic-key="motion_artifacts">
@@ -261,8 +273,9 @@
                     <span class="diagnostic-verdict" data-field="verdict"></span>
                   </header>
                   <div class="diagnostic-score-row">
-                    <strong data-field="score">0%</strong>
-                    <span>severity</span>
+                    <strong data-field="score">0.0 / 100</strong>
+                    <span>severity index</span>
+                    <span class="calculated-indicator">Calculated</span>
                   </div>
                   <div class="severity-track" data-field="track" role="meter" aria-label="Motion artifacts severity" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
                     <span data-field="meter"></span>
@@ -270,6 +283,7 @@
                   <strong class="diagnostic-status" data-field="status"></strong>
                   <p class="diagnostic-explanation" data-field="explanation"></p>
                   <p class="diagnostic-measured"><span>Measured</span><strong data-field="measured"></strong></p>
+                  <p class="diagnostic-measured diagnostic-limits"><span>Decision limits</span><strong data-field="thresholds"></strong></p>
                 </article>
 
                 <article class="diagnostic-card" data-diagnostic-key="occlusion">
@@ -281,8 +295,9 @@
                     <span class="diagnostic-verdict" data-field="verdict"></span>
                   </header>
                   <div class="diagnostic-score-row">
-                    <strong data-field="score">0%</strong>
-                    <span>severity</span>
+                    <strong data-field="score">0.0 / 100</strong>
+                    <span>severity index</span>
+                    <span class="calculated-indicator">Calculated</span>
                   </div>
                   <div class="severity-track" data-field="track" role="meter" aria-label="Occlusion risk severity" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
                     <span data-field="meter"></span>
@@ -290,6 +305,7 @@
                   <strong class="diagnostic-status" data-field="status"></strong>
                   <p class="diagnostic-explanation" data-field="explanation"></p>
                   <p class="diagnostic-measured"><span>Measured</span><strong data-field="measured"></strong></p>
+                  <p class="diagnostic-measured diagnostic-limits"><span>Decision limits</span><strong data-field="thresholds"></strong></p>
                 </article>
 
                 <article class="diagnostic-card" data-diagnostic-key="poor_framing">
@@ -301,8 +317,9 @@
                     <span class="diagnostic-verdict" data-field="verdict"></span>
                   </header>
                   <div class="diagnostic-score-row">
-                    <strong data-field="score">0%</strong>
-                    <span>severity</span>
+                    <strong data-field="score">0.0 / 100</strong>
+                    <span>severity index</span>
+                    <span class="calculated-indicator">Calculated</span>
                   </div>
                   <div class="severity-track" data-field="track" role="meter" aria-label="Poor framing risk severity" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
                     <span data-field="meter"></span>
@@ -310,6 +327,7 @@
                   <strong class="diagnostic-status" data-field="status"></strong>
                   <p class="diagnostic-explanation" data-field="explanation"></p>
                   <p class="diagnostic-measured"><span>Measured</span><strong data-field="measured"></strong></p>
+                  <p class="diagnostic-measured diagnostic-limits"><span>Decision limits</span><strong data-field="thresholds"></strong></p>
                 </article>
 
                 <article class="diagnostic-card" data-diagnostic-key="low_resolution">
@@ -321,8 +339,9 @@
                     <span class="diagnostic-verdict" data-field="verdict"></span>
                   </header>
                   <div class="diagnostic-score-row">
-                    <strong data-field="score">0%</strong>
-                    <span>severity</span>
+                    <strong data-field="score">0.0 / 100</strong>
+                    <span>severity index</span>
+                    <span class="calculated-indicator">Calculated</span>
                   </div>
                   <div class="severity-track" data-field="track" role="meter" aria-label="Low resolution severity" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
                     <span data-field="meter"></span>
@@ -330,6 +349,7 @@
                   <strong class="diagnostic-status" data-field="status"></strong>
                   <p class="diagnostic-explanation" data-field="explanation"></p>
                   <p class="diagnostic-measured"><span>Measured</span><strong data-field="measured"></strong></p>
+                  <p class="diagnostic-measured diagnostic-limits"><span>Decision limits</span><strong data-field="thresholds"></strong></p>
                 </article>
               </div>
             </section>
