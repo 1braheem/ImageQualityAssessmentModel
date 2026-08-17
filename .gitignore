@@ -1,0 +1,47 @@
+# Python bytecode and build output
+__pycache__/
+*.py[cod]
+*.so
+build/
+dist/
+*.egg-info/
+
+# Virtual environments and local configuration
+.venv/
+venv/
+env/
+.env
+.env.*
+!.env.example
+
+# Editor, notebook, and operating-system files
+.DS_Store
+.idea/
+.vscode/
+.ipynb_checkpoints/
+
+# Tool caches and coverage output
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local datasets and archives
+KonIQ-10k/
+KonIQ-10k.zip
+data/*
+!data/README.md
+
+# Trained weights and generated experiment output
+models/*
+!models/README.md
+*.pt
+*.pth
+*.ckpt
+*.onnx
+runs/
+logs/
+artifacts/
+predictions/
+*.log
