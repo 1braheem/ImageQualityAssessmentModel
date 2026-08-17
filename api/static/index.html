@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta
+      name="description"
+      content="Upload an image and receive an overall perceptual-quality score from an EfficientNet-B0 model."
+    >
+    <title>Image Quality Lab</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="/static/app.js" defer></script>
+  </head>
+  <body>
+    <div class="page-glow page-glow-one" aria-hidden="true"></div>
+    <div class="page-glow page-glow-two" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="Image Quality Lab home">
+        <span class="brand-mark" aria-hidden="true"><span></span></span>
+        <span>Image Quality Lab</span>
+      </a>
+
+      <div class="header-actions">
+        <a class="docs-link" href="/docs">API docs</a>
+        <div class="status-pill" id="modelStatus" aria-live="polite">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span class="status-text">Checking model</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-shell">
+      <section class="intro" aria-labelledby="pageTitle">
+        <p class="eyebrow">EfficientNet-B0 / KonIQ-10k</p>
+        <h1 id="pageTitle">Is your image ready for computer vision?</h1>
+        <p class="intro-copy">
+          Upload a JPEG, PNG, or WebP image. The model estimates overall visual
+          quality, then keeps its learned score separate from a transparent
+          resolution check.
+        </p>
+      </section>
+
+      <section class="workspace" aria-label="Image quality analyzer">
+        <article class="panel upload-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="step-label">Step 01</p>
+              <h2>Choose an image</h2>
+            </div>
+            <button class="text-button" id="resetButton" type="button" hidden>
+              Clear
+            </button>
+          </div>
+
+          <label class="drop-zone" id="dropZone" for="fileInput">
+            <input
+              id="fileInput"
+              type="file"
+              accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+            >
+            <span class="upload-glyph" aria-hidden="true">
+              <span class="upload-arrow"></span>
+            </span>
+            <span class="drop-title">Drop your image here</span>
+            <span class="drop-support">or click to browse your files</span>
+            <span class="format-badge">JPEG / PNG / WEBP - MAX 10 MB</span>
+          </label>
+
+          <div class="selected-file" id="selectedFile" hidden>
+            <div class="preview-frame">
+              <img id="imagePreview" alt="Selected image preview">
+            </div>
+            <div class="file-copy">
+              <span class="file-kicker">Selected image</span>
+              <strong id="fileName"></strong>
+              <span id="fileMeta"></span>
+            </div>
+          </div>
+
+          <div class="error-message" id="errorMessage" role="alert" hidden></div>
+
+          <button class="analyze-button" id="analyzeButton" type="button" disabled>
+            <span class="button-label">Analyze image quality</span>
+            <span class="button-arrow" aria-hidden="true">&rarr;</span>
+            <span class="button-loader" aria-hidden="true"></span>
+          </button>
+
+          <p class="privacy-note">
+            Processed locally by your FastAPI server. The image is not stored by this app.
+          </p>
+        </article>
+
+        <article class="panel results-panel" id="resultsPanel">
+          <div class="panel-heading">
+            <div>
+              <p class="step-label">Step 02</p>
+              <h2>Quality report</h2>
+            </div>
+            <span class="result-state" id="resultState">Waiting</span>
+          </div>
+
+          <div class="results-empty" id="resultsEmpty">
+            <div class="empty-visual" aria-hidden="true">
+              <span class="empty-ring ring-one"></span>
+              <span class="empty-ring ring-two"></span>
+              <span class="empty-center"></span>
+            </div>
+            <h3>Your result will appear here</h3>
+            <p>Select an image and run the analysis to see its score and suitability checks.</p>
+          </div>
+
+          <div class="results-content" id="resultsContent" hidden aria-live="polite">
+            <div class="score-summary">
+              <div class="score-ring" id="scoreRing" role="img" aria-label="Quality score">
+                <div class="score-ring-inner">
+                  <strong id="scoreValue">0</strong>
+                  <span>/ 100</span>
+                </div>
+              </div>
+
+              <div class="score-copy">
+                <span class="score-label" id="scoreLabel">Overall quality</span>
+                <h3 id="qualityBand">Waiting</h3>
+                <p id="scoreDescription"></p>
+                <span class="decision-chip" id="decisionChip"></span>
+              </div>
+            </div>
+
+            <div class="check-grid">
+              <div class="check-card">
+                <div class="check-icon" id="modelCheckIcon" aria-hidden="true"></div>
+                <div>
+                  <span>Learned model check</span>
+                  <strong id="modelCheckValue"></strong>
+                  <small id="modelCheckDetail"></small>
+                </div>
+              </div>
+
+              <div class="check-card">
+                <div class="check-icon" id="resolutionCheckIcon" aria-hidden="true"></div>
+                <div>
+                  <span>Resolution rule</span>
+                  <strong id="resolutionCheckValue"></strong>
+                  <small id="resolutionCheckDetail"></small>
+                </div>
+              </div>
+            </div>
+
+            <div class="image-details">
+              <div>
+                <span>Dimensions</span>
+                <strong id="imageDimensions"></strong>
+              </div>
+              <div>
+                <span>Format</span>
+                <strong id="imageFormat"></strong>
+              </div>
+              <div>
+                <span>MOS equivalent</span>
+                <strong id="mosValue"></strong>
+              </div>
+            </div>
+
+            <p class="model-note">
+              This model predicts overall perceptual quality. It does not invent individual
+              blur, glare, exposure, or occlusion labels that are absent from the dataset.
+            </p>
+          </div>
+        </article>
+      </section>
+
+      <section class="explanation-strip" aria-label="How the decision works">
+        <div>
+          <span class="strip-number">01</span>
+          <p><strong>Model score</strong> estimates overall perceived quality from visual features.</p>
+        </div>
+        <div>
+          <span class="strip-number">02</span>
+          <p><strong>Resolution rule</strong> checks the original dimensions without using AI.</p>
+        </div>
+        <div>
+          <span class="strip-number">03</span>
+          <p><strong>Final suitability</strong> requires both checks to pass their stated thresholds.</p>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

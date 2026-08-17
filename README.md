@@ -124,7 +124,8 @@ The main failure pattern is regression toward average scores. Among test images 
 ImageQualityAssessmentModel/
 |-- api/
 |   |-- main.py          # FastAPI routes and upload validation
-|   `-- schemas.py       # Typed response models
+|   |-- schemas.py       # Typed response models
+|   `-- static/          # Local upload UI (HTML, CSS, and JavaScript)
 |-- data/
 |   `-- README.md        # Local dataset layout
 |-- models/
@@ -218,8 +219,18 @@ source .venv/bin/activate
 
 Open:
 
+- Upload interface: [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
 - Interactive API documentation: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 - Readiness check: [http://127.0.0.1:8000/health](http://127.0.0.1:8000/health)
+
+### Use the upload interface
+
+1. Open `http://127.0.0.1:8000/` while the server terminal remains running.
+2. Drag an image onto the upload area, or click it and choose a JPEG, PNG, or WebP file.
+3. Confirm the preview, then click **Analyze image quality**.
+4. Read the 0-100 quality score, suitability decision, learned-model check, and separate resolution rule.
+
+The page validates the basic file type and 10 MiB limit before sending the image to the local API. Server-side validation remains authoritative for corrupt, mismatched, or oversized images.
 
 If the checkpoint is stored elsewhere, set an absolute path before starting:
 

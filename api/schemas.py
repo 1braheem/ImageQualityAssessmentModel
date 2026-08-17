@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 
 
 class ServiceResponse(BaseModel):
-    """Basic service information returned from the root route."""
+    """Basic machine-readable service information."""
 
     name: str
     status: Literal["running"]

@@ -8,6 +8,8 @@ from functools import lru_cache
 from pathlib import Path
 
 from fastapi import FastAPI, File, HTTPException, UploadFile, status
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from PIL import Image, UnidentifiedImageError
 
 from api.schemas import (
@@ -29,6 +31,7 @@ SUPPORTED_CONTENT_TYPES = {
     "image/png": "PNG",
     "image/webp": "WEBP",
 }
+STATIC_DIRECTORY = Path(__file__).resolve().parent / "static"
 
 
 app = FastAPI(
@@ -39,6 +42,7 @@ app = FastAPI(
         "does not produce individual blur, glare, exposure, or occlusion labels."
     ),
 )
+app.mount("/static", StaticFiles(directory=STATIC_DIRECTORY), name="static")
 
 
 @lru_cache(maxsize=4)
@@ -91,9 +95,16 @@ def _decode_image(data: bytes, content_type: str) -> Image.Image:
         ) from exc
 
 
-@app.get("/", response_model=ServiceResponse, tags=["service"])
+@app.get("/", include_in_schema=False)
+def user_interface() -> FileResponse:
+    """Serve the local image-upload interface."""
+
+    return FileResponse(STATIC_DIRECTORY / "index.html")
+
+
+@app.get("/api-info", response_model=ServiceResponse, tags=["service"])
 def service_info() -> ServiceResponse:
-    """Confirm that the HTTP service is running."""
+    """Return machine-readable service information."""
 
     return ServiceResponse(
         name="Image Quality Assessment API",
